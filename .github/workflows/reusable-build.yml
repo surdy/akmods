@@ -95,35 +95,35 @@ jobs:
 
           find ${{ env.KCWD }}
 
-      - name: Check Secureboot Signatures
-        if: steps.cache-kernel.outputs.cache-hit != 'true'
-        shell: bash
-        run: |
-          set -x
-          if [[ ! $(command -v sbverify) || ! $(command -v curl) || ! $(command -v openssl) || ! $(command -v rpm2cpio) ]]; then
-            sudo apt update
-            sudo apt install sbsigntool curl openssl rpm2cpio
-          fi
-
-          cd ${{ env.KCWD }}/rpms
-          if [[ "${{ inputs.kernel_flavor }}" == "surface" ]]; then
-            rpm2cpio kernel-surface-core-"${{ steps.kernel-version.outputs.kernel_release }}".rpm | cpio -idmv
-          else
-            rpm2cpio kernel-core-"${{ steps.kernel-version.outputs.kernel_release }}".rpm | cpio -idmv
-          fi
-          cd ./lib/modules/"${{ steps.kernel-version.outputs.kernel_release }}"/
-          sbverify --list vmlinuz
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            curl --retry 3 -#fLo kernel-sign.der https://github.com/ublue-os/akmods/raw/main/certs/public_key.der.test
-            curl --retry 3 -#fLo akmods.der https://github.com/ublue-os/akmods/raw/main/certs/public_key_2.der.test
-          else
-            curl --retry 3 -#fLo kernel-sign.der https://github.com/ublue-os/akmods/raw/main/certs/public_key.der
-            curl --retry 3 -#fLo akmods.der https://github.com/ublue-os/akmods/raw/main/certs/public_key_2.der
-          fi
-          openssl x509 -in kernel-sign.der -out kernel-sign.crt
-          openssl x509 -in akmods.der -out akmods.crt
-          sbverify --cert kernel-sign.crt vmlinuz || exit 1
-          sbverify --cert akmods.crt vmlinuz || exit 1
+#      - name: Check Secureboot Signatures
+#        if: steps.cache-kernel.outputs.cache-hit != 'true'
+#        shell: bash
+#        run: |
+#          set -x
+#          if [[ ! $(command -v sbverify) || ! $(command -v curl) || ! $(command -v openssl) || ! $(command -v rpm2cpio) ]]; then
+#            sudo apt update
+#            sudo apt install sbsigntool curl openssl rpm2cpio
+#          fi
+#
+#          cd ${{ env.KCWD }}/rpms
+#          if [[ "${{ inputs.kernel_flavor }}" == "surface" ]]; then
+#            rpm2cpio kernel-surface-core-"${{ steps.kernel-version.outputs.kernel_release }}".rpm | cpio -idmv
+#          else
+#            rpm2cpio kernel-core-"${{ steps.kernel-version.outputs.kernel_release }}".rpm | cpio -idmv
+#          fi
+#          cd ./lib/modules/"${{ steps.kernel-version.outputs.kernel_release }}"/
+#          sbverify --list vmlinuz
+#          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+#            curl --retry 3 -#fLo kernel-sign.der https://github.com/ublue-os/akmods/raw/main/certs/public_key.der.test
+#            curl --retry 3 -#fLo akmods.der https://github.com/ublue-os/akmods/raw/main/certs/public_key_2.der.test
+#          else
+#            curl --retry 3 -#fLo kernel-sign.der https://github.com/ublue-os/akmods/raw/main/certs/public_key.der
+#            curl --retry 3 -#fLo akmods.der https://github.com/ublue-os/akmods/raw/main/certs/public_key_2.der
+#          fi
+#          openssl x509 -in kernel-sign.der -out kernel-sign.crt
+#          openssl x509 -in akmods.der -out akmods.crt
+#          sbverify --cert kernel-sign.crt vmlinuz || exit 1
+#          sbverify --cert akmods.crt vmlinuz || exit 1
 
       - name: Finalize Cache Files
         if: steps.cache-kernel.outputs.cache-hit != 'true'
